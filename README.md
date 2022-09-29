@@ -42,6 +42,11 @@ This project is heavily inspired from @out386 's telegram bot which is written i
 - Count Drive Files.
 - Extract password protected files (It's not hack, you have to enter password)
 - For extracting password protected files, using custom filename and download
+- Update bot at startup and with restart command using `UPSTREAM_REPO`
+- Log Chat for mirror messages
+- Telegram Premium 4GB upload
+- Custom Name for all links except torrents. Must add extension except stream/yt links.
+- Send files directly to PM
 
 ## Multi Search IDs
 To use list from multi TD/folder. Run driveid.py in your terminal and follow it. It will generate **drive_folder** file or u can simply create `drive_folder` file in working directory and fill it, check below format:
@@ -134,6 +139,9 @@ Fill up rest of the fields. Meaning of each field is discussed below:
 
 **2. Optional Fields**
 
+- `UPSTREAM_REPO`: Your github repository link, if your repo is private add `https://username:{githubtoken}@github.com/{username}/{reponame}` format. Get token from [Github settings](https://github.com/settings/tokens). So you can update your bot from filled repository on each restart.
+  - **NOTE**: Any change in docker or requirements you need to deploy/build again with updated repo to take effect. DON'T delete .gitignore file.
+- `UPSTREAM_BRANCH`: Upstream branch for update. Default is `master`.
 - `ACCOUNTS_ZIP_URL`: Only if you want to load your Service Account externally from an Index Link or by any direct download link NOT webpage link. Archive the accounts folder to ZIP file. Fill this with the direct download link of zip file. If index need authentication so add direct download as shown below:
   - `https://username:password@example.workers.dev/...`
 - `TOKEN_PICKLE_URL`: Only if you want to load your **token.pickle** externally from an Index Link. Fill this with the direct link of that file.
@@ -151,7 +159,9 @@ Fill up rest of the fields. Meaning of each field is discussed below:
 - `CLONE_LIMIT`: To limit the size of Google Drive folder/file which you can clone. Don't add unit. Default unit is `GB`.
 - `VIEW_LINK`: View Link button to open file Index Link in browser instead of direct download link, you can figure out if it's compatible with your Index code or not, open any video from you Index and check if its URL ends with `?a=view`, if yes make it `True`, compatible with [BhadooIndex](https://gitlab.com/ParveenBhadooOfficial/Google-Drive-Index) Code. Default is `False`. `Bool`
 - `IGNORE_PENDING_REQUESTS`: Ignore pending requests after restart. Default is `False`. `Bool`
-- `TG_SPLIT_SIZE`: Size of split in bytes. Default is `2GB`.
+- `SESSION_STRING`: To download/upload from your telegram account. To generate session string use this command `python3 generate_string_session.py` after mounting repo folder for sure.
+ - **NOTE**: You can't use bot with private message, use it with group or channel.
+- `TG_SPLIT_SIZE`: Size of split in bytes. Default is `2GB`. Default is `4GB` if your account is premium.
 - `AS_DOCUMENT`: Default type of Telegram file upload. Default is `False` mean as media. `Bool`
 - `CUSTOM_FILENAME`: Add custom word to leeched file name.
 - `SHORTENER_API`: Fill your Shortener API key.
@@ -159,8 +169,9 @@ Fill up rest of the fields. Meaning of each field is discussed below:
   - Supported URL Shorteners:
   >exe.io gplinks.in shrinkme.io urlshortx.com shortzon.com
 - `CRYPT`: Cookie for gdtot google drive link generator.
-- `PHPSESSID`: Cookie for gdtot google drive link generator.
 - `RECURSIVE_SEARCH`: T/F And Fill drive_folder File Using Driveid.py Script.
+- `LOGS_CHATS`:  Chat ids of channels/groups where you want to store Mirror logs, NOTE Add bot in Mirror logs channel/group as Admin.
+- `BOT_PM`:  Set to "True" if you want files to be sent to user PM
 
   - `BUTTON_THREE_NAME`:
   - `BUTTON_THREE_URL`:
@@ -199,25 +210,25 @@ To Clone or Leech gdtot link follow these steps:
    ```
    javascript:(function () {
      const input = document.createElement('input');
-     input.value = JSON.stringify({url : window.location.href, cookie : document.cookie});
+     COOKIE = JSON.parse(JSON.stringify({cookie : document.cookie}));
+     input.value = COOKIE['cookie'].split('crypt=')[1];
      document.body.appendChild(input);
      input.focus();
      input.select();
      var result = document.execCommand('copy');
      document.body.removeChild(input);
      if(result)
-       alert('Cookie copied to clipboard');
+       alert('Crypt copied to clipboard');
      else
-       prompt('Failed to copy cookie. Manually copy below cookie\n\n', input.value);
+       prompt('Failed to copy Crypt. Manually copy below Crypt\n\n', input.value);
    })();
    ```
    - After pressing enter your browser will prompt a alert.
-3. Now you'll get this type of data in your clipboard
+3. Now you'll get CRYPT in your clipboard
    ```
-   {"url":"https://new.gdtot.org/","cookie":"PHPSESSID=k2xxxxxxxxxxxxxxxxxxxxj63o; crypt=NGxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxWdSVT0%3D"}
-
+   NGxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxWdSVT0%3D
    ```
-4. From this you have to paste value of PHPSESSID and crypt in config.env file.
+4. From this you have to paste value of CRYPT in config.env file.
 
 ## Generate Database
 
@@ -290,13 +301,42 @@ different hosts can be added each separated by a new line.
 
 </details>
 
+## Commands to set via [@BotFather](https://t.me/BotFather)
+~~~
+mirror - Mirror
+zipmirror - Mirror and upload as zip
+unzipmirror - Mirror and extract files
+leech - Leech to Telegram
+zipleech - Leech and upload as zip
+unzipleech - Leech and extract files
+clone - Copy file/folder to Drive
+count - Count file/folder of Drive
+watch - Mirror yt-dlp supported link
+zipwatch - Mirror yt-dlp supported link as zip
+leechwatch - Leech through yt-dlp supported link
+leechzipwatch - Leech yt-dlp support link as zip
+leechset - Leech settings
+setthumb - Set thumbnail
+status - Get Mirror Status message
+list - Search files in Drive
+cancel - Cancel a task
+cancelall - Cancel all tasks
+del - Delete file/folder from Drive{owner}
+log - Get the Bot Log{owner}
+restart - Restart the Bot{sudo}
+stats - Bot Usage Stats
+ping - Ping the Bot
+help - All cmds with description
+~~~
 
-## Deploy on git actions [workflow](https://github.com/rahulkhatri137/mirrorbot-workflow)
+## Deploy on [GitHub actions](https://github.com/rahulkhatri137/mirrorbot-workflow)
+* [Deploy Video Tutorial](https://youtu.be/U9uxTKsfvaE)
+
 
 ## Deploying on Heroku
 - Token Pickle URL is must for deploying on Heorku!
-[![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://dashboard.heroku.com/new?button-url=https://github.com/rahulkhatri137/mirrorbot137-deployer&template=https://github.com/rahulkhatri137/mirrorbot137-deployer)
 
+[![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://dashboard.heroku.com/new?button-url=https://github.com/rahulkhatri137/mirrorbot137-deployer&template=https://github.com/rahulkhatri137/mirrorbot137-deployer)
 
 
 - Deploying on Heroku with Github Workflow
